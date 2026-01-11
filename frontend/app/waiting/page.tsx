@@ -11,14 +11,18 @@ type Issue = {
   timestamp: string;
 };
 
-function makeAnalysisStorageKey(filename: string, intensity: string) {
-  return `analysis:${filename}:${intensity}`;
+function makeAnalysisStorageKey(filename: string) {
+  return `analysis:${filename}`;
+}
+
+function makeContextStorageKey(videoId: string) {
+  return `context:${videoId}`;
 }
 
 export default function WaitingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const filename = searchParams.get('file');
+  const filename = searchParams.get('file') ?? searchParams.get('videoId');
   const intensity = searchParams.get('intensity') ?? '1';
 
   /**
@@ -77,10 +81,26 @@ export default function WaitingPage() {
         }
 
         // 2) Analyze (backend does transcript+LLM)
+        const contextRaw = (() => {
+          try {
+            return filename ? sessionStorage.getItem(makeContextStorageKey(filename)) : null;
+          } catch {
+            return null;
+          }
+        })();
+        const context = (() => {
+          if (!contextRaw) return undefined;
+          try {
+            return JSON.parse(contextRaw) as unknown;
+          } catch {
+            return undefined;
+          }
+        })();
+
         const res = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ video_id: filename }),
+          body: JSON.stringify({ video_id: filename, ...(context ? { context } : {}) }),
         });
 
         const data = (await res.json()) as { success: boolean; analysis?: unknown };
@@ -88,7 +108,7 @@ export default function WaitingPage() {
         if (cancelled) return;
 
         // Store the full backend AnalysisResponse for results page
-        sessionStorage.setItem(makeAnalysisStorageKey(filename, intensity), JSON.stringify(data.analysis));
+        sessionStorage.setItem(makeAnalysisStorageKey(filename), JSON.stringify(data.analysis));
         setDone(true);
         // Small beat so the "happy" state is visible before redirect.
         window.setTimeout(() => {
@@ -115,7 +135,7 @@ export default function WaitingPage() {
   // Make the sequence feel like a single "gif": crossfade between frames.
   const [currentSrc, setCurrentSrc] = useState<string>(boySrc);
   const [nextSrc, setNextSrc] = useState<string | null>(null);
-  const [isFading, setIsFading] = useState(false);
+  const [nextVisible, setNextVisible] = useState(false);
 
   useEffect(() => {
     // Preload all frames so swaps are instant.
@@ -129,13 +149,18 @@ export default function WaitingPage() {
   useEffect(() => {
     if (boySrc === currentSrc) return;
     setNextSrc(boySrc);
-    setIsFading(true);
+    setNextVisible(false);
+    // Trigger opacity transition on the next frame without ever hiding the current frame.
+    const raf = window.requestAnimationFrame(() => setNextVisible(true));
     const t = window.setTimeout(() => {
       setCurrentSrc(boySrc);
       setNextSrc(null);
-      setIsFading(false);
+      setNextVisible(false);
     }, 220);
-    return () => window.clearTimeout(t);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.clearTimeout(t);
+    };
   }, [boySrc, currentSrc]);
 
   return (
@@ -176,7 +201,7 @@ export default function WaitingPage() {
                           alt="Waiting boy"
                           width={180}
                           height={180}
-                          className={`boy-img boy-frame ${isFading ? 'boy-fade-out' : 'boy-fade-in'}`}
+                          className="boy-img boy-frame boy-current"
                           onError={() => setUseBoyImage(false)}
                           draggable={false}
                         />
@@ -186,7 +211,7 @@ export default function WaitingPage() {
                             alt="Waiting boy"
                             width={180}
                             height={180}
-                            className="boy-img boy-frame boy-fade-in"
+                            className={`boy-img boy-frame boy-next ${nextVisible ? 'boy-next--show' : ''}`}
                             onError={() => setUseBoyImage(false)}
                             draggable={false}
                           />
@@ -374,7 +399,6 @@ export default function WaitingPage() {
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-gray-300">
                   <span>Usually takes ~1–2 mins</span>
-                  <span className="tabular-nums">{filename ? `File: ${filename}` : 'Preparing…'}</span>
                 </div>
               </div>
 
@@ -483,11 +507,15 @@ export default function WaitingPage() {
           transition: opacity 220ms ease-in-out;
           opacity: 1;
         }
-        .boy-fade-in {
+        .boy-current {
           opacity: 1;
         }
-        .boy-fade-out {
+        .boy-next {
           opacity: 0;
+          pointer-events: none;
+        }
+        .boy-next--show {
+          opacity: 1;
         }
         .boy-wrap::before {
           content: '';

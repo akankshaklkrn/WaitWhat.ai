@@ -1,6 +1,7 @@
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as {
     video_id?: string;
+    context?: unknown;
   };
 
   if (!body?.video_id) {
@@ -11,7 +12,10 @@ export async function POST(req: Request) {
   const res = await fetch(`${backendBase}/analyze`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ video_id: body.video_id }),
+    body: JSON.stringify({
+      video_id: body.video_id,
+      ...(body.context ? { context: body.context } : {}),
+    }),
     cache: 'no-store',
   });
 
