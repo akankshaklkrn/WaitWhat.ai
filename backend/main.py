@@ -4,7 +4,7 @@ from pathlib import Path
 import shutil
 import os
 import uuid
-from typing import Dict, List
+from typing import Dict, List, Optional
 import asyncio
 import time
 
@@ -47,8 +47,20 @@ llm_tools = LLMTools()
 analysis_cache = {}
 
 # Pydantic models
+class PresentationContext(BaseModel):
+    mode: str
+    audience: str
+    goal: str
+    one_liner: Optional[str] = None
+    target_user: Optional[str] = None
+    tone_preference: Optional[str] = None
+    success_metrics: Optional[List[str]] = None
+    domain: Optional[str] = None
+    time_limit: Optional[str] = None
+
 class AnalyzeRequest(BaseModel):
     video_id: str
+    context: Optional[PresentationContext] = None
 
 class IssueSegment(BaseModel):
     segment_id: int
@@ -169,6 +181,8 @@ async def get_video_transcript(file_id: str):
 
 @app.post("/analyze", response_model=AnalysisResponse)
 async def analyze_video(request: AnalyzeRequest):
+    """Analyze video clarity using Person B's LLM tools with optional presentation context"""
+    context = request.context.dict() if request.context else {}
     """
     Analyze video clarity using Person B's LLM tools
     
@@ -334,16 +348,41 @@ async def analyze_video(request: AnalyzeRequest):
             should_flag = SignalHelpers.should_flag_as_issue(risk, severities, risk_threshold=4.0)
             
             if should_flag and len(triggered_signals) > 0:
-                # Generate label and fix
-                # Include structure violations in the context if this window is involved
+                # Generate label and fix with presentation context
                 additional_context = ""
+                
+                # Add structure violations if present
                 if "structure_order" in triggered_signals and structure_violations:
-                    additional_context = f" Structure issues: {'; '.join(structure_violations)}"
+                    additional_context = f"Structure issues: {'; '.join(structure_violations)}\n"
+                
+                # Add presentation context
+                if context:
+                    context_str = [
+                        f"Mode: {context.get('mode', 'unknown')}",
+                        f"Audience: {context.get('audience', 'unknown')}",
+                        f"Goal: {context.get('goal', 'unknown')}"
+                    ]
+                    
+                    if context.get('one_liner'):
+                        context_str.append(f"One-liner: {context['one_liner']}")
+                    if context.get('target_user'):
+                        context_str.append(f"Target user: {context['target_user']}")
+                    if context.get('tone_preference'):
+                        context_str.append(f"Desired tone: {context['tone_preference']}")
+                    if context.get('success_metrics'):
+                        context_str.append(f"Success metrics: {', '.join(context['success_metrics'])}")
+                    if context.get('domain'):
+                        context_str.append(f"Domain: {context['domain']}")
+                    if context.get('time_limit'):
+                        context_str.append(f"Time limit: {context['time_limit']}")
+                    
+                    additional_context += "\nPresentation context:\n" + "\n".join(context_str)
                 
                 label_fix = llm_tools.label_and_fix(
                     window['text'] + additional_context,
                     triggered_signals,
-                    terms.terms
+                    terms.terms,
+                    context=context  # Pass presentation context
                 )
                 
                 # Generate roast variants with personalized context
@@ -352,7 +391,8 @@ async def analyze_video(request: AnalyzeRequest):
                     label_fix.explanation,
                     label_fix.fix,
                     transcript_excerpt=window['text'],
-                    signals=triggered_signals
+                    signals=triggered_signals,
+                    context=context  # Pass presentation context
                 )
                 
                 # Create issue

@@ -340,13 +340,7 @@ Answer:"""
             return any(pattern.replace(term, term_lower) in text_lower for pattern in patterns)
     
     
-    def label_and_fix(
-        self, 
-        window_text: str, 
-        triggered_signals: List[str], 
-        terms: List[str],
-        context: Optional[str] = None
-    ) -> LabelAndFixResult:
+    def label_and_fix(self, window_text: str, triggered_signals: List[str], terms: List[str], context: dict = None) -> LabelAndFixResult:
         """
         Generate a catchy label and actionable fix for a flagged segment.
         
@@ -370,15 +364,18 @@ Answer:"""
         
         signals_text = ", ".join([signals_desc.get(s, s) for s in triggered_signals])
         
-        prompt = f"""This demo/pitch segment has clarity issues: {signals_text}
+        prompt = f"""You are analyzing a presentation segment with these clarity issues: {signals_text}
+
+Presentation Context:
+{context if context else 'No specific context provided'}
 
 Transcript: "{window_text}"
 Problematic terms: {terms}
 
-Generate:
-1. A catchy 2-4 word label (examples: "Buzzword Overdose", "Ghost Terms", "Trust Me Bro")
-2. A brief 1-sentence explanation of the issue
-3. A specific 1-sentence fix
+Based on the presentation context above, generate:
+1. A catchy 2-4 word label that resonates with the audience and mode
+2. A brief explanation of why this is an issue for this specific audience and goal
+3. A specific fix that considers the time limit and target user
 
 Return ONLY a JSON object:
 {{
@@ -416,14 +413,7 @@ JSON:"""
             )
     
     
-    def roast_variants(
-        self, 
-        label: str, 
-        explanation: str, 
-        fix: str,
-        transcript_excerpt: str = "",
-        signals: List[str] = None
-    ) -> RoastVariants:
+    def roast_variants(self, label: str, explanation: str, fix: str, transcript_excerpt: str = None, signals: List[str] = None, context: dict = None) -> RoastVariants:
         """
         Generate 3 tones of feedback: kind, honest, brutal.
         
@@ -443,11 +433,20 @@ JSON:"""
         transcript_context = f"\nTranscript excerpt: \"{transcript_excerpt}\"" if transcript_excerpt else ""
         
         # First, generate KIND and HONEST tones (standard temperature)
-        prompt_standard = f"""You are a pitch coach giving feedback on a demo video segment.
+        prompt_standard = f"""You are a pitch coach giving feedback on a presentation.
+
+Presentation Context:
+{context if context else 'No specific context provided'}
 
 Issue Label: {label}
 Problem: {explanation}
 Suggested Fix: {fix}{signals_context}{transcript_context}
+
+Consider:
+- Audience is {context.get('audience', 'unknown')}
+- Goal is {context.get('goal', 'unknown')}
+- Time limit is {context.get('time_limit', 'unknown')}
+- Domain is {context.get('domain', 'unknown')}
 
 Generate KIND and HONEST feedback versions with CONCRETE, SPECIFIC suggestions based on the actual transcript.
 
@@ -472,11 +471,19 @@ Return ONLY a JSON object:
 JSON:"""
         
         # Generate BRUTAL tone separately with high temperature for maximum creativity
-        prompt_brutal = f"""You are a savage pitch roaster giving brutal but constructive feedback.
+        prompt_brutal = f"""You are a savage but constructive pitch roaster who understands the context:
+
+Presentation Context:
+{context if context else 'No specific context provided'}
 
 Issue: {label}
 Problem: {explanation}
 Suggested Fix: {fix}{signals_context}{transcript_context}
+
+Remember:
+- This is a {context.get('mode', 'presentation')} for {context.get('audience', 'an audience')}
+- The goal is to {context.get('goal', 'communicate effectively')}
+- Time limit: {context.get('time_limit', 'unknown')}
 
 Write a BRUTAL 3-line roast in this EXACT format:
 
