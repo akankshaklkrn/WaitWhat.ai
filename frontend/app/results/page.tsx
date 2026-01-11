@@ -457,9 +457,10 @@ export default function ResultsPage() {
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
           {/* Video Player */}
-          <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/20">
+          <div className="bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 overflow-hidden lg:h-[calc(100vh-330px)]">
+            <div className="h-full overflow-y-auto p-6">
             <div className="aspect-video bg-black/40 rounded-2xl mb-5 overflow-hidden border border-white/10">
             {filename ? (
               <video 
@@ -602,49 +603,52 @@ export default function ResultsPage() {
             )}
           </div>
           </div>
+          </div>
 
           {/* Issues List */}
-          <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 max-h-[600px] overflow-y-auto">
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {issues.map((issue) => (
-                <div 
-                  key={issue.id}
-                  className={`bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-colors cursor-pointer ${
-                    selectedSegmentId === issue.segmentId ? 'ring-1 ring-white/25' : ''
-                  }`}
-                  onClick={() => {
-                    setSelectedSegmentId(issue.segmentId);
-                    seekToSeconds(issue.startSec);
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setSelectedSegmentId(issue.segmentId);
-                      seekToSeconds(issue.startSec);
-                    }
-                  }}
-                >
-                  <div className="flex items-start gap-4">
-                    {getIconForType(issue.type)}
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-1">
-                        <h3 className="font-semibold text-lg">{issue.title}</h3>
-                        <span className="text-yellow-500 font-mono text-sm">{issue.timestamp}</span>
-                      </div>
-                      <p className="text-gray-300 text-sm">{issue.description}</p>
-                    </div>
-                  </div>
+          <div className="bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 overflow-hidden lg:h-[calc(100vh-330px)]">
+            <div className="h-full overflow-y-auto p-8">
+              {loading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
                 </div>
-              ))}
+              ) : (
+                <div className="space-y-4">
+                  {issues.map((issue) => (
+                    <div 
+                      key={issue.id}
+                      className={`bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-colors cursor-pointer ${
+                        selectedSegmentId === issue.segmentId ? 'ring-1 ring-white/25' : ''
+                      }`}
+                      onClick={() => {
+                        setSelectedSegmentId(issue.segmentId);
+                        seekToSeconds(issue.startSec);
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedSegmentId(issue.segmentId);
+                          seekToSeconds(issue.startSec);
+                        }
+                      }}
+                    >
+                      <div className="flex items-start gap-4">
+                        {getIconForType(issue.type)}
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-1">
+                            <h3 className="font-semibold text-lg">{issue.title}</h3>
+                            <span className="text-yellow-500 font-mono text-sm">{issue.timestamp}</span>
+                          </div>
+                          <p className="text-gray-300 text-sm">{issue.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
           </div>
         </div>
       </section>

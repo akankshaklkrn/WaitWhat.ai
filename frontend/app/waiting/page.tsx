@@ -19,6 +19,18 @@ function makeContextStorageKey(videoId: string) {
   return `context:${videoId}`;
 }
 
+type PresentationContext = {
+  mode?: string;
+  audience?: string;
+  goal?: string;
+  one_liner?: string;
+  target_user?: string;
+  tone_preference?: string;
+  success_metrics?: string[];
+  domain?: string;
+  time_limit?: string;
+};
+
 export default function WaitingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -35,6 +47,7 @@ export default function WaitingPage() {
 
   const [stage, setStage] = useState(0);
   const [done, setDone] = useState(false);
+  const [context, setContext] = useState<PresentationContext | null>(null);
   const stages = useMemo(
     () => [
       { label: 'Watching your demo…', img: '/watchboy.png' }, // waiting
@@ -53,12 +66,71 @@ export default function WaitingPage() {
   }, []);
 
   useEffect(() => {
+    if (!filename) {
+      setContext(null);
+      return;
+    }
+    try {
+      const raw = sessionStorage.getItem(makeContextStorageKey(filename));
+      setContext(raw ? (JSON.parse(raw) as PresentationContext) : null);
+    } catch {
+      setContext(null);
+    }
+  }, [filename]);
+
+  useEffect(() => {
     if (done) return;
     const t = window.setInterval(() => {
       setStage((s) => (s + 1) % stages.length);
-    }, 1200);
+    }, 4000);
     return () => window.clearInterval(t);
   }, [done, stages.length]);
+
+  const tips = useMemo(() => {
+    const list: string[] = [
+      'Heatmap highlights the most problematic moments in your talk.',
+      'You’ll get a rephrased pitch / suggested rewrite for unclear parts.',
+      'You can change intensity later — the analysis stays the same, only the wording changes.',
+      'Click any issue in Results to jump to that exact moment in the video.',
+      'We prioritize clarity first: what’s confusing, why it matters, and exactly how to fix it.',
+    ];
+
+    const bits: string[] = [];
+    if (context?.mode) bits.push(context.mode);
+    if (context?.audience) bits.push(`for ${context.audience}`);
+    if (context?.goal) bits.push(`goal: ${context.goal}`);
+    if (bits.length) {
+      list.unshift(`Using your context (${bits.join(' • ')}) to tailor the feedback.`);
+    }
+    return list;
+  }, [context?.audience, context?.goal, context?.mode]);
+
+  const [tipIndex, setTipIndex] = useState(0);
+  useEffect(() => {
+    setTipIndex(0);
+  }, [tips.length]);
+
+  useEffect(() => {
+    if (done) return;
+    if (tips.length <= 1) return;
+    let cancelled = false;
+    let t: number | null = null;
+
+    const schedule = () => {
+      const ms = 10_000 + Math.floor(Math.random() * 2_001); // 10–12s
+      t = window.setTimeout(() => {
+        if (cancelled) return;
+        setTipIndex((i) => (i + 1) % tips.length);
+        schedule();
+      }, ms);
+    };
+
+    schedule();
+    return () => {
+      cancelled = true;
+      if (t) window.clearTimeout(t);
+    };
+  }, [done, tips.length]);
 
   useEffect(() => {
     let cancelled = false;
@@ -131,6 +203,7 @@ export default function WaitingPage() {
   const [useBoyImage, setUseBoyImage] = useState(true);
   const boySrcRaw = done ? '/happy.png' : stages[stage]?.img ?? '/watchboy.png';
   const boySrc = `${boySrcRaw}?v=${assetV}`;
+  const mood: 'neutral' | 'frustrated' | 'happy' = done ? 'happy' : stage === 1 ? 'frustrated' : 'neutral';
 
   // Make the sequence feel like a single "gif": crossfade between frames.
   const [currentSrc, setCurrentSrc] = useState<string>(boySrc);
@@ -397,13 +470,13 @@ export default function WaitingPage() {
                 <div className="h-2 bg-white/10 rounded-full border border-white/10 overflow-hidden">
                   <div className="wait-progress h-full bg-white/25" />
                 </div>
-                <div className="mt-3 flex items-center justify-between text-xs text-gray-300">
-                  <span>Usually takes ~1–2 mins</span>
+                <div className="mt-4 flex items-center justify-center text-xs text-gray-300">
+                  <span className="text-center">Usually takes ~1–2 mins</span>
                 </div>
               </div>
 
-              <div className="mt-8 text-xs text-gray-400">
-                Tip: click any issue in Results to jump to that exact moment.
+              <div className="mt-4 text-xs text-gray-400 text-center max-w-lg mx-auto leading-relaxed">
+                Tip: {tips[Math.min(tips.length - 1, tipIndex)]}
               </div>
             </div>
           </div>
