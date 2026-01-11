@@ -36,8 +36,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create uploads directory if it doesn't exist
-UPLOAD_DIR = Path("uploads")
+# Create uploads directory if it doesn't exist (shared at WaitWhat.ai/uploads)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+UPLOAD_DIR = PROJECT_ROOT / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 # Initialize Person B's LLM Tools

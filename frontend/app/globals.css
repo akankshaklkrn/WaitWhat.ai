@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+    Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+@keyframes abstractDrift {
+  0% {
+    background-position:
+      0% 45%,
+      100% 30%,
+      15% 85%,
+      85% 70%,
+      50% 45%;
+  }
+  100% {
+    background-position:
+      100% 55%,
+      0% 70%,
+      85% 20%,
+      15% 80%,
+      52% 40%;
+  }
+}
+
+@keyframes hueShift {
+  0% {
+    filter: blur(110px) saturate(155%) brightness(0.62) contrast(1.12) hue-rotate(-6deg);
+  }
+  100% {
+    filter: blur(110px) saturate(155%) brightness(0.62) contrast(1.12) hue-rotate(8deg);
+  }
+}
+
+.animated-gradient {
+  position: relative;
+  /* Frame-ish: near-black → deep blue-violet */
+  background: linear-gradient(201deg, #000 13.65%, #0a0f17 99.95%);
+  isolation: isolate;
+}
+
+.animated-gradient::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  pointer-events: none;
+  opacity: 0.52;
+  /* Screen gives the “color mixing” feel; darkness is controlled via hueShift brightness */
+  mix-blend-mode: screen;
+  will-change: background-position, filter;
+  background-image:
+    linear-gradient(120deg, rgba(29, 78, 216, 0.85) 0%, rgba(29, 78, 216, 0) 62%),
+    linear-gradient(220deg, rgba(79, 70, 229, 0.78) 0%, rgba(79, 70, 229, 0) 60%),
+    /* small magenta accent (logo tint, not “pink heavy”) */
+    linear-gradient(18deg, rgba(236, 72, 153, 0.26) 0%, rgba(236, 72, 153, 0) 58%),
+    linear-gradient(320deg, rgba(37, 99, 235, 0.62) 0%, rgba(37, 99, 235, 0) 62%);
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+  background-size:
+    260% 260%,
+    300% 300%,
+    220% 220%,
+    320% 320%;
+  background-position:
+    0% 45%,
+    100% 30%,
+    15% 85%,
+    85% 70%;
+  animation:
+    abstractDrift 28s ease-in-out infinite alternate,
+    hueShift 16s ease-in-out infinite alternate;
+}
+
+.animated-gradient::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.92;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+  box-shadow:
+    inset 0 0 160px rgba(0, 0, 0, 0.62),
+    inset 0 0 90px rgba(0, 0, 0, 0.35);
+}
+
+.animated-gradient > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Custom slider styling */
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ef4444;
+  cursor: pointer;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.slider::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ef4444;
+  cursor: pointer;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}

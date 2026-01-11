@@ -3,7 +3,8 @@ from pathlib import Path
 from typing import Optional, Dict
 from datetime import datetime
 
-UPLOAD_DIR = Path("uploads")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+UPLOAD_DIR = PROJECT_ROOT / "uploads"
 DB_PATH = UPLOAD_DIR / "metadata.json"
 
 # Ensure directory exists
