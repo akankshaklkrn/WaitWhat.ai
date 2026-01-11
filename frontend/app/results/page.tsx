@@ -35,8 +35,8 @@ type BackendAnalysis = {
   segments: BackendSegment[];
 };
 
-function makeAnalysisStorageKey(filename: string, intensity: string) {
-  return `analysis:${filename}:${intensity}`;
+function makeAnalysisStorageKey(filename: string) {
+  return `analysis:${filename}`;
 }
 
 export default function ResultsPage() {
@@ -209,8 +209,10 @@ export default function ResultsPage() {
       setLoading(true);
 
       // 1) Instant path: use analysis that Waiting page cached
-      const key = makeAnalysisStorageKey(filename, intensityParam);
-      const cached = sessionStorage.getItem(key);
+      const key = makeAnalysisStorageKey(filename);
+      // Back-compat: older builds stored analysis per intensity.
+      const legacyKey = `analysis:${filename}:${intensityParam}`;
+      const cached = sessionStorage.getItem(key) ?? sessionStorage.getItem(legacyKey);
       if (cached) {
         try {
           const parsed = JSON.parse(cached) as BackendAnalysis;
@@ -219,7 +221,13 @@ export default function ResultsPage() {
             setClarityTier(typeof parsed.clarity_tier === 'string' ? parsed.clarity_tier : null);
             setAnalysis(parsed);
             setLoading(false);
-            sessionStorage.removeItem(key);
+            // Clean up legacy key if present; keep new key for future intensity changes.
+            try {
+              sessionStorage.setItem(key, JSON.stringify(parsed));
+              sessionStorage.removeItem(legacyKey);
+            } catch {
+              // ignore
+            }
             return;
           }
         } catch {
@@ -398,7 +406,7 @@ export default function ResultsPage() {
 
                   {intensityOpen && (
                     <div
-                      className="absolute z-[80] mt-2 w-full rounded-2xl border border-white/15 bg-black/35 backdrop-blur-xl shadow-2xl overflow-hidden"
+                      className="absolute z-[80] mt-2 w-full rounded-2xl border border-white/20 bg-slate-950/95 shadow-2xl overflow-hidden"
                       role="listbox"
                       aria-label="Select intensity"
                     >
