@@ -224,7 +224,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-8 py-20">
         <div className="text-center mb-20">
-          <p className="text-5xl md:text-6xl text-white mb-6 font-medium tracking-tight max-w-4xl mx-auto leading-[1.08]">
+          <p className="text-4xl md:text-5xl text-white mb-6 font-medium tracking-tight max-w-4xl mx-auto leading-[1.1]">
             Get feedback on your demos that <span className="italic font-medium">actually helps.</span>
           </p>
           <p className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed">
@@ -279,7 +279,7 @@ export default function Home() {
                   {uploadedFile ? uploadedFile.name : 'Click to upload'}
                 </h4>
                 <p className="text-gray-300 text-sm text-center">
-                  {uploading ? (uploadStatusText || 'Uploading…') : uploadSuccess ? '✓ Upload successful!' : 'MP4, MOV, WebM • Max 5 min'}
+                  {uploading ? (uploadStatusText || 'Uploading…') : uploadSuccess ? '✓ Upload successful!' : 'MP4, MOV, WebM'}
                 </p>
               </div>
             </div>
