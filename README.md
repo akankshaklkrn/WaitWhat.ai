@@ -93,6 +93,8 @@ Copy code
     }
   ]
 }
+
+```
 🛠️ Tech Stack
 Component	Technology
 Frontend	Next.js + Tailwind CSS
