@@ -41,3 +41,17 @@ backend/uploads/metadata.json
 # Logs
 *.log
 logs/
+
+# Frontend (Next.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+frontend/.vercel/
+frontend/coverage/
+frontend/.swc/
+
+# Archives / uploads (never commit)
+_archive/
+uploads/
+backend/uploads/
