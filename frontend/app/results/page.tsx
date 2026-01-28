@@ -269,6 +269,7 @@ const formatTime = (seconds: number) => {
             setAnalysis(parsed);
             setSignalBreakdown(parsed.signal_breakdown);
             setTimelineHeatmap(parsed.timeline_heatmap);
+            console.log('Rephrased pitch from cache:', parsed.rephrased_pitch);
             setRephrasedPitch(parsed.rephrased_pitch || null);
             setLoading(false);
             // Clean up legacy key if present; keep new key for future intensity changes.
@@ -300,6 +301,7 @@ const formatTime = (seconds: number) => {
         setAnalysis(data.analysis);
         setSignalBreakdown(data.analysis.signal_breakdown);
         setTimelineHeatmap(data.analysis.timeline_heatmap);
+        console.log('Rephrased pitch from API:', data.analysis.rephrased_pitch);
         setRephrasedPitch(data.analysis.rephrased_pitch || null);
         setLoading(false);
       } catch {
@@ -644,17 +646,18 @@ const formatTime = (seconds: number) => {
               )}
 
               {/* Rephrased Pitch */}
-              {rephrasedPitch && (
-                <div className="mt-6 pt-6 border-t border-white/10">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-sm font-semibold tracking-wide text-white/90">Rephrased Pitch</h2>
-                    <span className="text-xs text-gray-300">AI-enhanced version</span>
-                  </div>
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-left">
-                    <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{rephrasedPitch}</p>
-                  </div>
+              {(() => { console.log('Rendering rephrased pitch:', rephrasedPitch); return null; })()}
+              <div className="mt-6 pt-6 border-t border-white/10">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-semibold tracking-wide text-white/90">Rephrased Pitch</h2>
+                  <span className="text-xs text-gray-300">AI-enhanced version</span>
                 </div>
-              )}
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-left">
+                  <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
+                    {rephrasedPitch || "We will show rephrased pitch here"}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 

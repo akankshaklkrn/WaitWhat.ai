@@ -646,29 +646,37 @@ Now write YOUR 3-line brutal roast for this issue. Be witty, sharp, and memorabl
         
         feedback_text = "\n".join(feedback_summary) if feedback_summary else "No major issues detected."
         
-        prompt = f"""You are a pitch coach helping rewrite a demo video script to be clearer and more compelling.
+        base_prompt = """You are an expert pitch coach helping rewrite a startup pitch to be clear, credible, and compelling.
 
-ORIGINAL TRANSCRIPT:
-"{original_transcript}"
+Your task:
+Rewrite the pitch so it is READY for judges or investors.
 
-CURRENT CLARITY SCORE: {clarity_score}/100 ({clarity_tier})
+Rules:
+- Remove vague hype and buzzwords
+- Explain what the product does in plain language
+- Clearly state who it is for and what problem it solves
+- Keep ambition, but ground claims
+- If evidence or examples are missing, rewrite claims to be conservative and realistic
+- Do NOT invent metrics or results
+- Maintain confident, professional tone (not salesy)
+- Keep it concise (similar length to original)
+- Fix all issues mentioned in the feedback
 
-FEEDBACK TO ADDRESS:
-{feedback_text}
+Pitch Context:
+- Audience: Judges / technical reviewers
+- Goal: Communicate clarity, credibility, and value
+- Domain: AI / productivity / developer tools
 
-Generate a COMPLETE REPHRASED VERSION of this pitch that:
-1. Fixes all the issues mentioned in the feedback
-2. Maintains the same structure and key points
-3. Keeps it concise (similar length to original)
-4. Defines technical terms inline
-5. Provides evidence for claims
-6. Uses clear, punchy language
-7. Follows good pitch structure (problem → solution → demo/proof)
+Original Pitch:
+{}
 
-Return ONLY the rephrased pitch script (no explanations, no meta-commentary).
-The speaker should be able to read this directly as their new script.
+Feedback to Address:
+{}
 
-REPHRASED PITCH:"""
+Output:
+Return ONLY the rewritten pitch text.
+Do not include explanations, bullets, or commentary."""
+        prompt = base_prompt.format(original_transcript, feedback_text)
         
         try:
             response = self.model.generate_content(
@@ -682,11 +690,22 @@ REPHRASED PITCH:"""
             
             # Clean any markdown formatting
             if "```" in rephrased:
-                rephrased = rephrased.split("```")[0].strip()
+                # Handle both ```json and ``` cases
+                parts = rephrased.split("```")
+                if len(parts) >= 3:
+                    rephrased = parts[1] if parts[1].strip() else parts[0]
+                else:
+                    rephrased = parts[0]
             
-            # Remove any "REPHRASED PITCH:" header if the model added it
-            if rephrased.startswith("REPHRASED PITCH:"):
-                rephrased = rephrased.replace("REPHRASED PITCH:", "").strip()
+            # Remove common headers the model might add
+            headers_to_remove = ["REPHRASED PITCH:", "OUTPUT:", "REWRITTEN PITCH:"]
+            for header in headers_to_remove:
+                if rephrased.startswith(header):
+                    rephrased = rephrased.replace(header, "").strip()
+            
+            # Ensure we have content
+            if not rephrased.strip():
+                raise ValueError("Generated pitch was empty")
             
             return rephrased
             

@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     return Response.json({ success: false, error: 'Missing video_id' }, { status: 400 });
   }
 
-  const backendBase = process.env.BACKEND_BASE_URL ?? 'http://127.0.0.1:8000';
+  const backendBase = process.env.NEXT_PUBLIC_BACKEND_BASE_URL ?? 'http://127.0.0.1:9000';
   const res = await fetch(`${backendBase}/analyze`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

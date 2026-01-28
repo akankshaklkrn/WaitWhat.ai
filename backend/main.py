@@ -504,9 +504,21 @@ async def analyze_video(request: AnalyzeRequest):
         try:
             print("Generating rephrased pitch...")
             original_transcript = "\n".join(window["text"] for window in windows)
+            # Convert IssueSegment objects to dictionaries for LLM processing
+            issues_dict = [{
+                'segment_id': issue.segment_id,
+                'start_sec': issue.start_sec,
+                'end_sec': issue.end_sec,
+                'risk': issue.risk,
+                'severity': issue.severity,
+                'label': issue.label,
+                'fix': issue.fix,
+                'signals_triggered': issue.signals_triggered
+            } for issue in issues]
+            
             rephrased_pitch = llm_tools.generate_rephrased_pitch(
                 original_transcript,
-                issues,
+                issues_dict,
                 int(100 - (total_risk / len(windows) * 10)),  # clarity_score
                 "needs work" if total_risk > 20 else "good"  # clarity_tier
             )

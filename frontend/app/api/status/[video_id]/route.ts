@@ -5,7 +5,7 @@ export async function GET(
   { params }: { params: Promise<{ video_id: string }> }
 ) {
   const { video_id } = await params;
-  const backendBase = process.env.BACKEND_BASE_URL ?? 'http://127.0.0.1:8000';
+  const backendBase = process.env.NEXT_PUBLIC_BACKEND_BASE_URL ?? 'http://127.0.0.1:9000';
 
   const res = await fetch(`${backendBase}/status/${encodeURIComponent(video_id)}`, {
     method: 'GET',

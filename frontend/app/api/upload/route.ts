@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'No file uploaded' }, { status: 400 });
     }
 
-    const backendBase = process.env.BACKEND_BASE_URL ?? 'http://127.0.0.1:8000';
+    const backendBase = process.env.NEXT_PUBLIC_BACKEND_BASE_URL ?? 'http://127.0.0.1:9000';
     const form = new FormData();
     form.append('file', file, file.name);
 
